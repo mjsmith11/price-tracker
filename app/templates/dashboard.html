@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Dashboard · Price Tracker{% endblock %}
+{% block content %}
+  <section class="add-item">
+    <h2>Add an item</h2>
+    <form id="add-item-form">
+      <input type="text" id="item-name" placeholder="Item name, e.g. LEGO Titanic 10294" required>
+      <input type="number" id="item-threshold" placeholder="Alert threshold ($)" step="0.01">
+      <button type="submit">Create</button>
+    </form>
+
+    <div id="search-panel" class="hidden">
+      <h3>Find listings for <span id="search-item-name"></span></h3>
+      <form id="search-form">
+        <input type="text" id="search-query" placeholder="Search query" required>
+        <button type="submit">Search stores</button>
+      </form>
+      <div id="search-results"></div>
+      <button id="done-adding" class="secondary">Done adding listings</button>
+    </div>
+  </section>
+
+  <section>
+    <h2>Tracked items</h2>
+    <div id="items-list">Loading…</div>
+  </section>
+{% endblock %}
+{% block scripts %}
+<script>document.addEventListener("DOMContentLoaded", initDashboard);</script>
+{% endblock %}

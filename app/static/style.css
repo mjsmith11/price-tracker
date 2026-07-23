@@ -1,0 +1,113 @@
+:root {
+  color-scheme: light dark;
+  --border: #d8d8d8;
+  --muted: #666;
+  --accent: #2563eb;
+  --danger: #dc2626;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  margin: 0;
+  background: #fafafa;
+  color: #111;
+}
+
+.topbar {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+  background: #fff;
+}
+
+.brand {
+  font-weight: 700;
+  font-size: 1.1rem;
+  text-decoration: none;
+  color: #111;
+}
+
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+section { margin-bottom: 2rem; }
+
+h2 { font-size: 1.1rem; margin-bottom: 0.75rem; }
+
+form { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; }
+
+input {
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 0.95rem;
+}
+
+#item-name { flex: 1; min-width: 220px; }
+#item-threshold { width: 160px; }
+#search-query { flex: 1; min-width: 220px; }
+
+button {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+button.secondary {
+  background: #eee;
+  color: #111;
+}
+
+button.link {
+  background: none;
+  color: var(--danger);
+  padding: 0.2rem 0.4rem;
+}
+
+.hidden { display: none; }
+
+.card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.card-row { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+
+.card a { color: inherit; text-decoration: none; font-weight: 600; }
+.card a:hover { text-decoration: underline; }
+
+.price { font-weight: 700; }
+.price.below-threshold { color: var(--danger); }
+
+.meta { color: var(--muted); font-size: 0.85rem; }
+
+.error-text { color: var(--danger); font-size: 0.85rem; }
+
+.candidate {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+@media (prefers-color-scheme: dark) {
+  body { background: #111; color: #eee; }
+  .topbar, .card { background: #1b1b1b; border-color: #333; }
+  .brand { color: #eee; }
+  input { background: #222; border-color: #333; color: #eee; }
+  button.secondary { background: #2a2a2a; color: #eee; }
+  .meta { color: #999; }
+}
