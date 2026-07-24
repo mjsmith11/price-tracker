@@ -21,6 +21,13 @@
   <section>
     <h2>Listings</h2>
     <div id="listings-list"></div>
+
+    <h3>Add a listing</h3>
+    <form id="add-listing-form">
+      <input type="text" id="add-listing-query" placeholder="Search query" required>
+      <button type="submit">Search stores</button>
+    </form>
+    <div id="add-listing-results"></div>
   </section>
 {% endblock %}
 {% block scripts %}

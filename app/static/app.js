@@ -55,7 +55,7 @@ async function initDashboard() {
     resultsEl.innerHTML = "Searching…";
     try {
       const candidates = await api(`/api/search?q=${encodeURIComponent(q)}`);
-      renderCandidates(candidates);
+      renderCandidates(candidates, currentDraftItemId, resultsEl);
     } catch (err) {
       resultsEl.innerHTML = `<p class="error-text">Search failed: ${err.message}</p>`;
     }
@@ -69,8 +69,7 @@ async function initDashboard() {
   });
 }
 
-function renderCandidates(candidates) {
-  const resultsEl = document.getElementById("search-results");
+function renderCandidates(candidates, itemId, resultsEl, onTracked) {
   if (!candidates.length) {
     resultsEl.innerHTML = "<p class='meta'>No results found.</p>";
     return;
@@ -90,7 +89,7 @@ function renderCandidates(candidates) {
       e.target.disabled = true;
       e.target.textContent = "Adding…";
       try {
-        await api(`/api/items/${currentDraftItemId}/listings`, {
+        await api(`/api/items/${itemId}/listings`, {
           method: "POST",
           body: JSON.stringify({
             store: c.store,
@@ -100,6 +99,7 @@ function renderCandidates(candidates) {
           }),
         });
         e.target.textContent = "Tracking ✓";
+        if (onTracked) await onTracked();
       } catch (err) {
         e.target.disabled = false;
         e.target.textContent = "Failed — retry";
@@ -169,6 +169,25 @@ async function initItemDetail(itemId) {
   renderItemHeader(item);
   renderListings(item);
   await renderChart(itemId);
+
+  document.getElementById("add-listing-query").value = item.name;
+  document.getElementById("add-listing-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const q = document.getElementById("add-listing-query").value.trim();
+    if (!q) return;
+    const resultsEl = document.getElementById("add-listing-results");
+    resultsEl.innerHTML = "Searching…";
+    try {
+      const candidates = await api(`/api/search?q=${encodeURIComponent(q)}`);
+      renderCandidates(candidates, itemId, resultsEl, async () => {
+        const refreshed = await api(`/api/items/${itemId}`);
+        renderListings(refreshed);
+        await renderChart(itemId);
+      });
+    } catch (err) {
+      resultsEl.innerHTML = `<p class="error-text">Search failed: ${err.message}</p>`;
+    }
+  });
 
   document.getElementById("edit-item-name").value = item.name;
   document.getElementById("edit-item-threshold").value =

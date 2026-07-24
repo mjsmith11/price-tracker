@@ -53,8 +53,8 @@ SQLite data persists in `./data`.
 ## How tracking works
 
 1. Add an item with a name and (optionally) a price threshold.
-2. Search — the app queries each store adapter and shows candidate
-   listings for you to review.
+2. Search — the app queries every store adapter in parallel and shows
+   candidate listings for you to review.
 3. Confirm the listings that are actually the product you want; each
    confirmed listing is scraped on its own going forward.
 
@@ -62,6 +62,11 @@ This confirm-before-tracking step exists because automatically matching
 one product across stores is unreliable — the app helps you find
 candidates but you make the final call so you don't end up tracking the
 wrong item.
+
+You're not limited to the listings you add when first creating an item —
+the item detail page has its own "Add a listing" search, so you can keep
+attaching more stores (or edit the item's name/threshold, or delete it
+entirely) at any time.
 
 ## Development (without Docker)
 

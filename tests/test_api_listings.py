@@ -14,6 +14,25 @@ def test_confirm_listing_scrapes_immediately(client, fake_adapter):
     assert fake_adapter.scrape_calls == ["https://example.com/p/1"]
 
 
+def test_confirm_second_listing_on_item_with_existing_listing(client, fake_adapter):
+    item = client.post("/api/items", json={"name": "Item"}).json()
+    client.post(
+        f"/api/items/{item['id']}/listings",
+        json={"store": "fakestore", "product_url": "https://example.com/p/1", "title": "First"},
+    )
+
+    resp = client.post(
+        f"/api/items/{item['id']}/listings",
+        json={"store": "fakestore", "product_url": "https://example.com/p/2", "title": "Second"},
+    )
+    assert resp.status_code == 200
+
+    item_after = client.get(f"/api/items/{item['id']}").json()
+    assert len(item_after["listings"]) == 2
+    urls = {l["product_url"] for l in item_after["listings"]}
+    assert urls == {"https://example.com/p/1", "https://example.com/p/2"}
+
+
 def test_confirm_listing_missing_item_404s(client, fake_adapter):
     resp = client.post(
         "/api/items/999/listings",
