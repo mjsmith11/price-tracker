@@ -30,6 +30,27 @@ def test_update_item_threshold(client):
     assert resp.json()["name"] == "Item"
 
 
+def test_update_item_name_and_threshold_together(client):
+    item = client.post("/api/items", json={"name": "Old name", "threshold_price": 100}).json()
+    resp = client.patch(f"/api/items/{item['id']}", json={"name": "New name", "threshold_price": 250})
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["name"] == "New name"
+    assert body["threshold_price"] == 250
+
+
+def test_update_item_can_clear_threshold(client):
+    item = client.post("/api/items", json={"name": "Item", "threshold_price": 100}).json()
+    resp = client.patch(f"/api/items/{item['id']}", json={"threshold_price": None})
+    assert resp.status_code == 200
+    assert resp.json()["threshold_price"] is None
+
+
+def test_update_missing_item_404s(client):
+    resp = client.patch("/api/items/999", json={"name": "X"})
+    assert resp.status_code == 404
+
+
 def test_delete_item(client):
     item = client.post("/api/items", json={"name": "Throwaway"}).json()
     resp = client.delete(f"/api/items/{item['id']}")

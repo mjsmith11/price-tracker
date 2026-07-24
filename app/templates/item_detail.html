@@ -5,6 +5,16 @@
   <div id="item-header">Loading…</div>
 
   <section>
+    <h2>Edit item</h2>
+    <form id="edit-item-form">
+      <input type="text" id="edit-item-name" placeholder="Item name" required>
+      <input type="number" id="edit-item-threshold" placeholder="Alert threshold ($)" step="0.01">
+      <button type="submit">Save</button>
+      <button type="button" id="delete-item-button" class="link">Delete item</button>
+    </form>
+  </section>
+
+  <section>
     <canvas id="price-chart" height="100"></canvas>
   </section>
 

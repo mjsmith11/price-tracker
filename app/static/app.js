@@ -169,6 +169,30 @@ async function initItemDetail(itemId) {
   renderItemHeader(item);
   renderListings(item);
   await renderChart(itemId);
+
+  document.getElementById("edit-item-name").value = item.name;
+  document.getElementById("edit-item-threshold").value =
+    item.threshold_price !== null ? item.threshold_price : "";
+
+  document.getElementById("edit-item-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const name = document.getElementById("edit-item-name").value.trim();
+    const thresholdRaw = document.getElementById("edit-item-threshold").value;
+    const threshold_price = thresholdRaw ? parseFloat(thresholdRaw) : null;
+    if (!name) return;
+
+    const updated = await api(`/api/items/${itemId}`, {
+      method: "PATCH",
+      body: JSON.stringify({ name, threshold_price }),
+    });
+    renderItemHeader(updated);
+  });
+
+  document.getElementById("delete-item-button").addEventListener("click", async () => {
+    if (!confirm(`Delete "${item.name}" and all its tracked listings and price history?`)) return;
+    await api(`/api/items/${itemId}`, { method: "DELETE" });
+    window.location.href = "/";
+  });
 }
 
 function renderItemHeader(item) {
