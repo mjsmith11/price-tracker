@@ -1,9 +1,9 @@
 import datetime
 
-from sqlalchemy import Boolean, DateTime, Float, ForeignKey, String, Text
+from sqlalchemy import Boolean, Float, ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.db import Base
+from app.db import Base, UTCDateTime
 
 
 def utcnow() -> datetime.datetime:
@@ -18,7 +18,7 @@ class Item(Base):
     notes: Mapped[str | None] = mapped_column(Text, default=None)
     threshold_price: Mapped[float | None] = mapped_column(Float, default=None)
     currency: Mapped[str] = mapped_column(String(8), default="USD")
-    created_at: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    created_at: Mapped[datetime.datetime] = mapped_column(UTCDateTime, default=utcnow)
 
     listings: Mapped[list["Listing"]] = relationship(
         back_populates="item", cascade="all, delete-orphan"
@@ -37,12 +37,12 @@ class Listing(Base):
     confirmed: Mapped[bool] = mapped_column(Boolean, default=True)
     active: Mapped[bool] = mapped_column(Boolean, default=True)
 
-    last_seen_at: Mapped[datetime.datetime | None] = mapped_column(DateTime(timezone=True), default=None)
+    last_seen_at: Mapped[datetime.datetime | None] = mapped_column(UTCDateTime, default=None)
     last_price: Mapped[float | None] = mapped_column(Float, default=None)
     last_in_stock: Mapped[bool | None] = mapped_column(Boolean, default=None)
     last_error: Mapped[str | None] = mapped_column(Text, default=None)
 
-    created_at: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    created_at: Mapped[datetime.datetime] = mapped_column(UTCDateTime, default=utcnow)
 
     item: Mapped["Item"] = relationship(back_populates="listings")
     price_points: Mapped[list["PricePoint"]] = relationship(
@@ -58,7 +58,7 @@ class PricePoint(Base):
     price: Mapped[float | None] = mapped_column(Float, default=None)
     in_stock: Mapped[bool] = mapped_column(Boolean, default=True)
     currency: Mapped[str] = mapped_column(String(8), default="USD")
-    scraped_at: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    scraped_at: Mapped[datetime.datetime] = mapped_column(UTCDateTime, default=utcnow)
 
     listing: Mapped["Listing"] = relationship(back_populates="price_points")
 
@@ -71,4 +71,4 @@ class Notification(Base):
     price_point_id: Mapped[int] = mapped_column(ForeignKey("price_points.id"))
     threshold: Mapped[float] = mapped_column(Float)
     channel: Mapped[str] = mapped_column(String(32), default="email")
-    sent_at: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    sent_at: Mapped[datetime.datetime] = mapped_column(UTCDateTime, default=utcnow)

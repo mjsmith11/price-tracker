@@ -7,6 +7,21 @@ def test_create_item(client):
     assert body["listings"] == []
 
 
+def test_created_at_is_timezone_aware_utc(client):
+    """Regression test: SQLite silently drops tzinfo on round-trip, which
+    made timestamps serialize without a UTC marker — browsers then parsed
+    them as local time instead of converting, so times displayed unshifted
+    (looked like UTC regardless of the viewer's actual timezone)."""
+    import datetime
+
+    body = client.post("/api/items", json={"name": "Item"}).json()
+    # py3.10's fromisoformat doesn't accept a trailing "Z" (3.11+ does)
+    raw = body["created_at"].replace("Z", "+00:00")
+    parsed = datetime.datetime.fromisoformat(raw)
+    assert parsed.tzinfo is not None
+    assert parsed.utcoffset() == datetime.timedelta(0)
+
+
 def test_list_items(client):
     client.post("/api/items", json={"name": "Item A"})
     client.post("/api/items", json={"name": "Item B"})
