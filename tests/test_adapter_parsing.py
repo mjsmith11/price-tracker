@@ -6,7 +6,7 @@ synthetic data, so they double as a record of the shapes each adapter was
 built against.
 """
 
-from app.adapters.bestbuy import SKU_QUERY_RE
+from app.adapters.bestbuy import SKU_QUERY_RE, _slug_to_query
 from app.adapters.lego import LegoAdapter
 from app.adapters.target import TargetAdapter
 from app.adapters.walmart import _is_blocked
@@ -84,3 +84,16 @@ class TestBestBuySkuQueryRegex:
     def test_no_match_when_absent(self):
         url = "https://www.bestbuy.com/product/switch-2-system/J7GSL57TGH"
         assert SKU_QUERY_RE.search(url) is None
+
+
+class TestBestBuySlugToQuery:
+    def test_derives_natural_language_query_from_slug(self):
+        url = "https://www.bestbuy.com/product/switch-2-system/J7GSL57TGH?skuId=6614313"
+        assert _slug_to_query(url) == "switch 2 system"
+
+    def test_works_without_model_segment(self):
+        url = "https://www.bestbuy.com/product/switch-2-system?skuId=6614313"
+        assert _slug_to_query(url) == "switch 2 system"
+
+    def test_returns_none_for_unexpected_url_shape(self):
+        assert _slug_to_query("https://www.bestbuy.com/") is None

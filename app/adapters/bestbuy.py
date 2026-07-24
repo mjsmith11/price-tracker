@@ -12,11 +12,24 @@ a burst of rapid repeated requests and recovers after a short quiet period
 (same pattern observed on target.com).
 
 Since search tiles already carry accurate price/title per SKU, scrape()
-deliberately avoids the product page entirely and instead re-runs a search
-for the listing's SKU, then reads the price off the matching tile. This
-isn't a workaround for something Best Buy is trying to hide — it's the
-same public price data, sourced through the page that's actually
-reachable. If that page ever gets throttled too, this adapter simply
+deliberately avoids the product page entirely and instead re-runs a search,
+then reads the price off the matching tile. This isn't a workaround for
+something Best Buy is trying to hide — it's the same public price data,
+sourced through the page that's actually reachable.
+
+UPDATE, from a real deployment failure report: searching by the bare
+numeric SKU (e.g. `st=6614313`) started reliably hitting
+net::ERR_HTTP2_PROTOCOL_ERROR — a connection-level reset, not a normal
+HTTP error — while a same-session natural-language query for the exact
+same product (e.g. `st=switch+2+system`, which still surfaces the
+`data-product-id="6614313"` tile) went through fine. A made-up numeric
+string worked too. The likely explanation: a scraper re-querying the
+identical bare-SKU string on every scrape cycle, forever, is a much
+stronger bot signal than a normal-looking text search — and this adapter
+was doing exactly that. Fixed by deriving the search query from the
+listing's URL slug (e.g. `/product/switch-2-system/...` -> "switch 2
+system") instead of the SKU, while still selecting the exact tile by
+`data-product-id`. If that ever gets throttled too, this adapter simply
 surfaces an error rather than a stale price, like every other adapter.
 
 Search tiles are React-virtualized: many placeholder tiles render with no
@@ -28,7 +41,7 @@ selector bug.
 
 import logging
 import re
-from urllib.parse import quote
+from urllib.parse import quote, urlparse
 
 from app.adapters.base import Candidate, PriceResult
 from app.scrape_utils import new_page, parse_price, with_retries
@@ -37,6 +50,14 @@ logger = logging.getLogger("price_tracker.adapters.bestbuy")
 
 BASE_URL = "https://www.bestbuy.com"
 SKU_QUERY_RE = re.compile(r"[?&]skuId=(\d+)")
+
+
+def _slug_to_query(product_url: str) -> str | None:
+    """Turn '/product/switch-2-system/J7GSL57TGH' into 'switch 2 system'."""
+    parts = [p for p in urlparse(product_url).path.split("/") if p]
+    if len(parts) >= 2 and parts[0] == "product":
+        return parts[1].replace("-", " ")
+    return None
 
 
 class BestBuyAdapter:
@@ -112,15 +133,18 @@ class BestBuyAdapter:
                 error="No skuId on stored product URL (listing predates this adapter version?)",
             )
         sku = match.group(1)
+        # a natural-language query is far less likely to get flagged than
+        # repeating the bare SKU number on every scrape cycle — see docstring
+        query = _slug_to_query(product_url) or sku
 
         try:
-            return with_retries(lambda: self._scrape_via_search(sku))
+            return with_retries(lambda: self._scrape_via_search(sku, query))
         except Exception as exc:  # noqa: BLE001
             logger.warning("bestbuy scrape failed for sku %s: %s", sku, exc)
             return PriceResult(price=None, currency="USD", in_stock=False, error=str(exc))
 
-    def _scrape_via_search(self, sku: str) -> PriceResult:
-        url = f"{BASE_URL}/site/searchpage.jsp?st={sku}"
+    def _scrape_via_search(self, sku: str, query: str) -> PriceResult:
+        url = f"{BASE_URL}/site/searchpage.jsp?st={quote(query)}"
         with new_page() as page:
             page.goto(url, timeout=20000, wait_until="domcontentloaded")
             page.wait_for_timeout(5000)
