@@ -36,14 +36,21 @@ def run_retention() -> None:
         db.close()
 
 
-def run() -> None:
-    scheduler = BlockingScheduler()
+def build_scheduler(scheduler):
+    """Register jobs on a (not-yet-started) scheduler instance.
+
+    Split out from run() so tests can verify the jobs actually recur —
+    this is exactly what broke previously: `next_run_time=None` on the
+    interval job doesn't just delay its first tick, it adds the job in a
+    permanently *paused* state (APScheduler's documented behavior) that
+    nothing in this code ever resumed. It ran once via the one-off
+    "initial_scrape" job and then never again.
+    """
     interval_hours = settings.scrape_interval_hours
     scheduler.add_job(
         scrape_all_active_listings,
         "interval",
         hours=interval_hours,
-        next_run_time=None,  # first run scheduled below, staggered slightly after startup
         id="scrape_all_active_listings",
     )
     scheduler.add_job(
@@ -52,14 +59,18 @@ def run() -> None:
         days=1,
         id="run_retention",
     )
+    # kick off an immediate first run rather than waiting a full interval;
+    # the interval job above still recurs normally afterwards
+    scheduler.add_job(scrape_all_active_listings, "date", id="initial_scrape")
+    return scheduler
+
+
+def run() -> None:
+    scheduler = build_scheduler(BlockingScheduler())
     logger.info(
         "scheduler starting, scrape interval = %.2fh, retention = %d day(s)",
-        interval_hours, settings.price_history_retention_days,
+        settings.scrape_interval_hours, settings.price_history_retention_days,
     )
-
-    # kick off an initial run shortly after startup rather than waiting a full interval
-    scheduler.add_job(scrape_all_active_listings, "date", id="initial_scrape")
-
     scheduler.start()
 
 
